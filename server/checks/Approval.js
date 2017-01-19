@@ -324,6 +324,16 @@ export default class Approval extends Check {
     const user = repository.owner.login
     const repoName = repository.name
     const sha = pull_request.head.sha
+    var groups = config.approvals.groups
+    if (groups && Object.keys(groups).some(group => groups[group].hasOwnProperty('labels'))) {
+      const labels = await this.github.getIssueLabels(user, repository.name, pull_request.number, token)
+      Object.keys(groups).forEach(function (key) {
+        const group = groups[key]
+        if (group.hasOwnProperty('labels') && group.labels.some(l => labels.indexOf(l) === -1)) {
+          delete config.approvals.groups[key]
+        }
+      })
+    }
     const {approvals, vetos} = await this.fetchAndCountApprovalsAndVetos(repository, pull_request, lastPush, additionalComments, config, token)
     const status = Approval.generateStatus({approvals, vetos}, config.approvals)
     // update status
@@ -456,6 +466,9 @@ export default class Approval extends Check {
                                                                                   repository
                                                                                 }))
           info(`${repository.full_name}#${number}: PR was synced, set state to pending`)
+        } else if (action === 'labeled' || action === 'unlabeled') {
+            const frozenComments = await this.pullRequestHandler.onGetFrozenComments(dbPR.id, dbPR.last_push)
+            await this.fetchApprovalsAndSetStatus(repository, pull_request, dbPR.last_push, config, token, frozenComments)
         }
         // on an issue comment
       } else if (event === EVENTS.ISSUE_COMMENT) {
