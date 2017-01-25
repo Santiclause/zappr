@@ -12,6 +12,10 @@ const INFO_TEXT = {
     href='https://zappr.readthedocs.io/en/latest/setup/#autobranch'>docs</a>), Zappr will automatically
     create a branch in your repository for every opened issue.
   </p>,
+  autolabel: <p>When enabling automatic pull request labeling (<a
+    href='https://zappr.readthedocs.io/en/latest/setup/#autolabel'>docs</a>), Zappr will automatically
+    label pull requests based on modified files, every time a commit is added.
+  </p>,
   commitmessage: <p>The commit message feature (<a href='https://zappr.readthedocs.io/en/latest/setup/#commitmessages'>docs</a>)
     will check that commit messages
     in a pull request match at least one of some patterns you provide.

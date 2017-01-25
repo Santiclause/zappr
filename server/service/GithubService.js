@@ -32,9 +32,12 @@ const API_URL_TEMPLATES = {
   REF: '/repos/${owner}/${repo}/git/refs/heads/${branch}',
   CREATE_REF: '/repos/${owner}/${repo}/git/refs',
   PR_COMMITS: '/repos/${owner}/${repo}/pulls/${number}/commits',
+  PR_FILES: '/repos/${owner}/${repo}/pulls/${number}/files?per_page=100&page=${page}',
   BRANCH_PROTECTION: '/repos/${owner}/${repo}/branches/${branch}/protection',
   REQUIRED_STATUS_CHECKS: '/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks',
   ISSUE: '/repos/${owner}/${repo}/issues/${number}',
+  ISSUE_LABELS: '/repos/${owner}/${repo}/issues/${number}/labels',
+  LABEL: '/repos/${owner}/${repo}/labels',
   PULL_REQUESTS: '/repos/${owner}/${repo}/pulls',
   BRANCH: '/repos/${owner}/${repo}/branches/${branch}',
   COMMITS: '/repos/${owner}/${repo}/git/commits',
@@ -598,6 +601,39 @@ export class GithubService {
                                  .replace('${number}', number)
     const issue = await this.fetchPath('GET', url, null, token)
     return issue.labels.map(l => l.name)
+  }
+
+  async replaceIssueLabels(user, repo, number, labels, token) {
+    const url = API_URL_TEMPLATES.ISSUE_LABELS
+                                 .replace('${owner}', user)
+                                 .replace('${repo}', repo)
+                                 .replace('${number}', number)
+    return this.fetchPath('PUT', url, labels, token)
+  }
+
+  async createLabel(user, repo, name, color, token) {
+    const url = API_URL_TEMPLATES.LABELS
+                                 .replace('${owner}', user)
+                                 .replace('${repo}', repo)
+    const label = {name, color}
+    return this.fetchPath('POST', url, label, token)
+  }
+
+  /**
+   * Gets the modified files for a pull request.
+   *
+   * @param owner The repo owner, e.g. zalando
+   * @param repo The repo name, e.g. zappr
+   * @param number The PR number, e.g. 207
+   * @param accessToken The Github access token to use
+   * @returns {Array} See https://developer.github.com/v3/pulls/#list-pull-requests-files
+   */
+  async fetchPullRequestFiles(owner, repo, number, accessToken, loadAll = true) {
+    const path = API_URL_TEMPLATES.PR_FILES
+                                  .replace('${owner}', owner)
+                                  .replace('${repo}', repo)
+                                  .replace('${number}', number)
+    return this._fetchPaged(path, loadAll, accessToken)
   }
 }
 

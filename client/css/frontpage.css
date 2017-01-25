@@ -1,4 +1,5 @@
 #autobranch_branch,
+#autolabel_branch,
 #approval_branch,
 #approval_master,
 #commitmessage_branch {
@@ -12,6 +13,7 @@
 
 
 #autobranch_commit,
+#autolabel_commit,
 #approval_mastercommit,
 #approval_commit {
     transition: rx .5s ease-in-out, ry .5s ease-in-out;

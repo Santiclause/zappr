@@ -1,6 +1,7 @@
 import {
   Approval,
   Autobranch,
+  Autolabel,
   CommitMessage,
   Specification,
   PullRequestLabels,
@@ -60,6 +61,7 @@ export default class CheckRunner {
     this.checkHandler = checkHandler
     this.approval = new Approval(this.githubService, this.pullRequestHandler, auditService)
     this.autobranch = new Autobranch(this.githubService)
+    this.autolabel = new Autolabel(this.githubService, this.pullRequestHandler)
     this.commitMessage = new CommitMessage(this.githubService)
     this.specification = new Specification(this.githubService)
     this.pullRequestLabels = new PullRequestLabels(this.githubService)
@@ -161,6 +163,17 @@ export default class CheckRunner {
         await this.checkHandler.onExecutionEnd(dbRepo.id, Specification.TYPE, Date.now() - start, true)
       } catch (e) {
         await this.checkHandler.onExecutionEnd(dbRepo.id, Specification.TYPE, Date.now() - start, false)
+      }
+    }
+
+    if (Autolabel.isTriggeredBy(event) && tokens[Autolabel.TYPE]) {
+      info(`${owner}/${name}: Executing check Autolabel`)
+      await this.checkHandler.onExecutionStart(dbRepo.id, Autolabel.TYPE, delay)
+      try {
+        await this.autolabel.execute(config, payload, tokens[Autolabel.TYPE], dbRepo.id)
+        await this.checkHandler.onExecutionEnd(dbRepo.id, Autolabel.TYPE, Date.now() - start, true)
+      } catch (e) {
+        await this.checkHandler.onExecutionEnd(dbRepo.id, Autolabel.TYPE, Date.now() - start, false)
       }
     }
 

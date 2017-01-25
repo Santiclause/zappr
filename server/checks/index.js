@@ -1,5 +1,6 @@
 import Approval from './Approval'
 import Autobranch from './Autobranch'
+import Autolabel from './Autolabel'
 import CommitMessage from './CommitMessage'
 import Specification from './Specification'
 import PullRequestLabels from './PullRequestLabels'
@@ -8,6 +9,7 @@ import PullRequestTasks from './PullRequestTasks'
 const CHECKS = {
   [Approval.TYPE]: Approval,
   [Autobranch.TYPE]: Autobranch,
+  [Autolabel.TYPE]: Autolabel,
   [CommitMessage.TYPE]: CommitMessage,
   [Specification.TYPE]: Specification,
   [PullRequestLabels.TYPE]: PullRequestLabels,
@@ -17,6 +19,7 @@ const CHECKS = {
 export const CHECK_NAMES = {
   [Approval.TYPE]: Approval.NAME,
   [Autobranch.TYPE]: Autobranch.NAME,
+  [Autolabel.TYPE]: Autolabel.NAME,
   [CommitMessage.TYPE]: CommitMessage.NAME,
   [Specification.TYPE]: Specification.NAME,
   [PullRequestLabels.TYPE]: PullRequestLabels.NAME,
@@ -29,4 +32,4 @@ export function getCheckByType(type) {
   return CHECKS[type]
 }
 
-export { Approval, Autobranch, CommitMessage, Specification, PullRequestLabels, PullRequestTasks }
+export { Approval, Autobranch, Autolabel, CommitMessage, Specification, PullRequestLabels, PullRequestTasks }

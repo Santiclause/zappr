@@ -5,6 +5,7 @@ import { Grid, Row, Col, Image, Navbar } from 'react-bootstrap'
 import { loginGithub } from '../actions/auth'
 import Approval from './../components/ApprovalAnimation.jsx'
 import Autobranch from './../components/AutobranchAnimation.jsx'
+import Autolabel from './../components/AutolabelAnimation.jsx'
 import CommitMessage from './../components/CommitMessageAnimation.jsx'
 import { logger } from '../../common/debug'
 import mascot from '../img/banner_small.png';
@@ -112,6 +113,11 @@ class Login extends Component {
               <h4>Automatic branch creation</h4>
               <p>Automatically create a branch in your repository <Highlight>for every opened issue.</Highlight></p>
               <Autobranch {...animationProps} />
+            </Col>
+            <Col sm={4}>
+              <h4>Automatic pull request labeling</h4>
+              <p>Automatically label a pull request <Highlight>based on which files are modified.</Highlight></p>
+              <Autolabel {...animationProps} />
             </Col>
           </Row>
           <Row>
