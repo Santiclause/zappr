@@ -2,6 +2,7 @@
 #autolabel_branch,
 #approval_branch,
 #approval_master,
+#review_branch,
 #commitmessage_branch {
     transition: stroke-dashoffset .5s ease-in-out;
     opacity: 0;
@@ -14,6 +15,7 @@
 
 #autobranch_commit,
 #autolabel_commit,
+#review_commit,
 #approval_mastercommit,
 #approval_commit {
     transition: rx .5s ease-in-out, ry .5s ease-in-out;

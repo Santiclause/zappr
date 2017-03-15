@@ -60,6 +60,10 @@ export const PUBLIC = 'public'
  */
 export const PULL_REQUEST_REVIEW_COMMENT = 'pull_request_review_comment'
 /**
+ * Any time a Pull Request is reviewed or other stuff etc whatever.
+ */
+export const PULL_REQUEST_REVIEW = 'pull_request_review'
+/**
  * Any time a Pull Request is assigned, unassigned, labeled, unlabeled, opened, edited, closed, reopened,
  * or synchronized (updated due to a new push in the branch that the pull request is tracking).
  */

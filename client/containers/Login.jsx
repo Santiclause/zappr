@@ -6,6 +6,7 @@ import { loginGithub } from '../actions/auth'
 import Approval from './../components/ApprovalAnimation.jsx'
 import Autobranch from './../components/AutobranchAnimation.jsx'
 import Autolabel from './../components/AutolabelAnimation.jsx'
+import Review from './../components/ReviewAnimation.jsx'
 import CommitMessage from './../components/CommitMessageAnimation.jsx'
 import { logger } from '../../common/debug'
 import mascot from '../img/banner_small.png';
@@ -102,6 +103,7 @@ class Login extends Component {
             <Col sm={4}>
               <h4>Pull Request approvals</h4>
               <p><Highlight>Block pull requests</Highlight> until maintainers approved all proposed changes.</p>
+              <Review {...animationProps} />
               <Approval {...animationProps} />
             </Col>
             <Col sm={4}>

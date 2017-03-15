@@ -6,6 +6,7 @@ import {
   Specification,
   PullRequestLabels,
   PullRequestTasks,
+  Review,
   getCheckByType
 } from './index'
 import { getPayloadFn } from './Check'
@@ -66,6 +67,7 @@ export default class CheckRunner {
     this.specification = new Specification(this.githubService)
     this.pullRequestLabels = new PullRequestLabels(this.githubService)
     this.pullRequestTasks = new PullRequestTasks(this.githubService)
+    this.review = new Review(this.githubService, auditService)
   }
 
   async release(dbRepo, checkType, accessToken) {
@@ -87,6 +89,7 @@ export default class CheckRunner {
       PullRequestLabels.TYPE,
       PullRequestTasks.TYPE,
       CommitMessage.TYPE,
+      Review.TYPE,
     ]
     if (PR_TYPES.indexOf(checkType) !== -1) {
       const repository = dbRepo.json
@@ -128,6 +131,13 @@ export default class CheckRunner {
               token,
               repository
             })
+          case Review.TYPE:
+            return this.review.fetchReviewsAndSetStatus(
+                    repository,
+                    pullRequest,
+                    config,
+                    token
+                  )
         }
       })
 
@@ -218,6 +228,17 @@ export default class CheckRunner {
         await this.checkHandler.onExecutionEnd(dbRepo.id, PullRequestTasks.TYPE, Date.now() - start, true)
       } catch (e) {
         await this.checkHandler.onExecutionEnd(dbRepo.id, PullRequestTasks.TYPE, Date.now() - start, false)
+      }
+    }
+
+    if (Review.isTriggeredBy(event) && tokens[Review.TYPE]) {
+      info(`${owner}/${name}: Executing check Review`)
+      await this.checkHandler.onExecutionStart(dbRepo.id, Review.TYPE, delay)
+      try {
+        await this.review.execute(config, event, payload, tokens[Review.TYPE], dbRepo.id)
+        await this.checkHandler.onExecutionEnd(dbRepo.id, Review.TYPE, Date.now() - start, true)
+      } catch (e) {
+        await this.checkHandler.onExecutionEnd(dbRepo.id, Review.TYPE, Date.now() - start, false)
       }
     }
   }

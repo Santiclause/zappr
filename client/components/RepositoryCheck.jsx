@@ -29,6 +29,11 @@ const INFO_TEXT = {
   </p>,
   pullrequesttasks: <p>The pull request tasks check (<a
     href='https://zappr.readthedocs.io/en/latest/setup/#pull-request-tasks'>docs</a>) will block pull requests that have open tasks.
+  </p>,
+  review: <p>The reviews feature (<a
+    href='https://zappr.readthedocs.io/en/latest/setup/#review'>docs</a>) functions almost identically to the approval feature, and
+    is mutually exclusive therewith. Instead of looking at PR comments, it uses the new GitHub PR review system. Additionally, it automatically
+    labels approved groups with the label &lt;group_name&gt;-approved unless you specify a different approval label in the group config under group.approval_label.
   </p>
 }
 

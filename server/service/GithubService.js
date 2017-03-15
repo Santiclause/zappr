@@ -19,6 +19,7 @@ const ZAPPR_WELCOME_TITLE = nconf.get('ZAPPR_WELCOME_TITLE')
 const ZAPPR_WELCOME_TEXT = nconf.get('ZAPPR_WELCOME_TEXT')
 const COMMIT_STATUS_MAX_LENGTH = 140
 const BRANCH_PREVIEW_HEADER = 'application/vnd.github.loki-preview+json'
+const REVIEW_PREVIEW_HEADER = {'Accept': 'application/vnd.github.black-cat-preview+json'}
 
 const API_URL_TEMPLATES = {
   HOOK: '/repos/${owner}/${repo}/hooks',
@@ -32,6 +33,7 @@ const API_URL_TEMPLATES = {
   REF: '/repos/${owner}/${repo}/git/refs/heads/${branch}',
   CREATE_REF: '/repos/${owner}/${repo}/git/refs',
   PR_COMMITS: '/repos/${owner}/${repo}/pulls/${number}/commits',
+  PR_REVIEWS: '/repos/${owner}/${repo}/pulls/${number}/reviews',
   PR_FILES: '/repos/${owner}/${repo}/pulls/${number}/files?per_page=100&page=${page}',
   BRANCH_PROTECTION: '/repos/${owner}/${repo}/branches/${branch}/protection',
   REQUIRED_STATUS_CHECKS: '/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks',
@@ -80,6 +82,35 @@ export class GithubService {
       CallCounter.inc({type: 'success'}, 1)
       return body
     }
+  }
+
+  async fetchPaged(method, path, payload, accessToken, headers = {}) {
+    var body = []
+    var options = this.getOptions(method, path, payload, accessToken, headers)
+    while (true) {
+      var [response, response_body] = await request(options)
+      var {statusCode} = response || {}
+
+      CallCounter.inc({type: 'total'}, 1)
+      // 300 codes are for github membership checks
+      if ([200, 201, 202, 203, 204, 300, 301, 302].indexOf(statusCode) < 0) {
+        error(`${statusCode} ${method} ${path}`, response.body)
+        if (statusCode >= 400 && statusCode <= 499) {
+          CallCounter.inc({type: '4xx'}, 1)
+        } else if (statusCode >= 500 && statusCode <= 599) {
+          CallCounter.inc({type: '5xx'}, 1)
+        }
+        throw new GithubServiceError(response)
+      }
+      CallCounter.inc({type: 'success'}, 1)
+      body = [...body, ...response_body]
+      if (response.headers && response.headers.link && response.headers.link.next) {
+        options.url = response.headers.link.next
+      } else {
+        break
+      }
+    }
+    return body
   }
 
   async _fetchPage(url, token) {
@@ -586,6 +617,24 @@ export class GithubService {
   }
 
   /**
+   * Returns all reviews for a pull request
+   *
+   * @param user
+   * @param repo
+   * @param number
+   * @param token
+   * @returns Array
+   */
+  async getReviews(user, repo, number, token) {
+    const url = API_URL_TEMPLATES.PR_REVIEWS
+                                 .replace('${owner}', user)
+                                 .replace('${repo}', repo)
+                                 .replace('${number}', number)
+    const reviews = await this.fetchPaged('GET', url, null, token, REVIEW_PREVIEW_HEADER)
+    return reviews
+  }
+
+  /**
    * Returns all labels present on an issue/pull request.
    *
    * @param user
@@ -601,6 +650,24 @@ export class GithubService {
                                  .replace('${number}', number)
     const issue = await this.fetchPath('GET', url, null, token)
     return issue.labels.map(l => l.name)
+  }
+
+  async addIssueLabels(user, repo, number, labels, token) {
+    const url = API_URL_TEMPLATES.ISSUE_LABELS
+                                 .replace('${owner}', user)
+                                 .replace('${repo}', repo)
+                                 .replace('${number}', number)
+    return this.fetchPath('POST', url, labels, token)
+  }
+
+  async removeIssueLabels(user, repo, number, labels, token) {
+    const url = API_URL_TEMPLATES.ISSUE_LABELS
+                                 .replace('${owner}', user)
+                                 .replace('${repo}', repo)
+                                 .replace('${number}', number)
+    labels.forEach(l => {
+      this.fetchPath('DELETE', joinURL(url, l), null, token)
+    })
   }
 
   async replaceIssueLabels(user, repo, number, labels, token) {
