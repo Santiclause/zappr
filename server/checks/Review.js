@@ -196,7 +196,7 @@ export default class Review extends Check {
                                                                                   repository
                                                                                 }))
           info(`${repository.full_name}#${number}: PR was opened, set state to pending`)
-        } else if (action === 'reopened' || action == 'submitted' || action == 'synchronize') {
+        } else if (action === 'reopened' || action == 'submitted' || action == 'synchronize' || action == 'dismissed') {
             await this.fetchReviewsAndSetStatus(repository, pull_request, config, token)
         } else if (action === 'labeled' || action === 'unlabeled') {
           // Check to make sure it's a label we care about, otherwise this should be a noop

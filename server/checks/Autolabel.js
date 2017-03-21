@@ -40,7 +40,7 @@ export default class Autolabel extends Check {
       const labels = config.autolabel.filter(l => files.some(f => f.filename.match(new RegExp(l.pattern, 'i'))))
       const current_labels = await this.github.getIssueLabels(owner, repo, number, token)
       const add_labels = labels.map(l => l.label)
-      let remove_labels = new Set(config.autolabel.filter(l => labels.indexOf(l) === -1).map(l => l.label))
+      let remove_labels = new Set(config.autolabel.map(l => l.label).filter(l => add_labels.indexOf(l) === -1))
       let new_labels = new Set([].concat(current_labels, add_labels).filter(l => !remove_labels.has(l)))
       this.github.replaceIssueLabels(owner, repo, number, [...new_labels], token)
     }
