@@ -38,7 +38,11 @@ export default class Autolabel extends Check {
       const files = await this.github.fetchPullRequestFiles(owner, repo, number, token, loadAll)
       // For now, only do basic filename filtering, without considering conditionals on addition/deletion/etc.
       const labels = config.autolabel.filter(l => files.some(f => f.filename.match(new RegExp(l.pattern, 'i'))))
-      const current_labels = await this.github.getIssueLabels(owner, repo, number, token)
+      try {
+          const current_labels = await this.github.getIssueLabels(owner, repo, number, token)
+      } catch(e) {
+          const current_labels = []
+      }
       const add_labels = labels.map(l => l.label)
       let remove_labels = new Set(config.autolabel.map(l => l.label).filter(l => add_labels.indexOf(l) === -1))
       let new_labels = new Set([].concat(current_labels, add_labels).filter(l => !remove_labels.has(l)))
