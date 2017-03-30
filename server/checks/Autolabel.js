@@ -1,6 +1,7 @@
 import Check from './Check'
 import { logger } from '../../common/debug'
 import * as EVENTS from '../model/GithubEvents'
+const util = require('util')
 
 const info = logger('autolabel', 'info')
 const debug = logger('autolabel')
@@ -27,10 +28,13 @@ export default class Autolabel extends Check {
     const repo = repository.name
     const owner = repository.owner.login
     const loadAll = true
+    var current_labels
     if (!config.autolabel || !config.autolabel.length) {
+      debug("No autolabel config set")
       return
     }
     if (pull_request.state === 'closed') {
+      debug("PR is closed")
       return
     }
     if (action === 'opened' || action === 'reopened' || action === 'synchronize') {
@@ -39,13 +43,15 @@ export default class Autolabel extends Check {
       // For now, only do basic filename filtering, without considering conditionals on addition/deletion/etc.
       const labels = config.autolabel.filter(l => files.some(f => f.filename.match(new RegExp(l.pattern, 'i'))))
       try {
-          const current_labels = await this.github.getIssueLabels(owner, repo, number, token)
+        current_labels = await this.github.getIssueLabels(owner, repo, number, token)
       } catch(e) {
-          const current_labels = []
+        debug(`getIssueLabels request failed: ${util.inspect(e)}`)
+        current_labels = []
       }
       const add_labels = labels.map(l => l.label)
       let remove_labels = new Set(config.autolabel.map(l => l.label).filter(l => add_labels.indexOf(l) === -1))
       let new_labels = new Set([].concat(current_labels, add_labels).filter(l => !remove_labels.has(l)))
+      debug(`new_labels: ${util.inspect(new_labels, {showHidden: false, depth: null})}`)
       this.github.replaceIssueLabels(owner, repo, number, [...new_labels], token)
     }
   }
