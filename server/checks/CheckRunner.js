@@ -18,6 +18,7 @@ import { findDeepInObj } from '../../common/util'
 import { logger } from '../../common/debug'
 const info = logger('checkrunner', 'info')
 const error = logger('checkrunner', 'error')
+const util = require('util')
 
 /**
  * Returns a map of {<checkType>: <token>} for the given repository.
@@ -177,12 +178,14 @@ export default class CheckRunner {
     }
 
     if (Autolabel.isTriggeredBy(event) && tokens[Autolabel.TYPE]) {
-      info(`${owner}/${name}: Executing check Autolabel`)
+      info(`${owner}/${name}: Executing check Autolabel for event ${event}`)
       await this.checkHandler.onExecutionStart(dbRepo.id, Autolabel.TYPE, delay)
       try {
         await this.autolabel.execute(config, payload, tokens[Autolabel.TYPE], dbRepo.id)
         await this.checkHandler.onExecutionEnd(dbRepo.id, Autolabel.TYPE, Date.now() - start, true)
       } catch (e) {
+        debug(`Autolabel check failed:`)
+        debug(`${util.inspect(e)}`)
         await this.checkHandler.onExecutionEnd(dbRepo.id, Autolabel.TYPE, Date.now() - start, false)
       }
     }
@@ -232,12 +235,14 @@ export default class CheckRunner {
     }
 
     if (Review.isTriggeredBy(event) && tokens[Review.TYPE]) {
-      info(`${owner}/${name}: Executing check Review`)
+      info(`${owner}/${name}: Executing check Review for event ${event}`)
       await this.checkHandler.onExecutionStart(dbRepo.id, Review.TYPE, delay)
       try {
         await this.review.execute(config, event, payload, tokens[Review.TYPE], dbRepo.id)
         await this.checkHandler.onExecutionEnd(dbRepo.id, Review.TYPE, Date.now() - start, true)
       } catch (e) {
+        debug(`Review check failed:`)
+        debug(`${util.inspect(e)}`)
         await this.checkHandler.onExecutionEnd(dbRepo.id, Review.TYPE, Date.now() - start, false)
       }
     }

@@ -5,6 +5,7 @@ import { promiseReduce, getIn, toGenericComment } from '../../common/util'
 import * as EVENTS from '../model/GithubEvents'
 import * as AUDIT_EVENTS from '../service/audit/AuditEventTypes'
 import * as _ from 'lodash'
+const util = require('util')
 
 const context = 'zappr'
 const info = logger('review', 'info')
@@ -94,17 +95,20 @@ export default class Review extends Check {
    * @param config The Zappr configuration
    * @param token The GH token to use
    */
-  async fetchReviewsAndSetStatus(repository, pull_request, config, token) {
+  async fetchReviewsAndSetStatus(repository, pull_request, config, token, hookPayload) {
     const user = repository.owner.login
     const sha = pull_request.head.sha
-    const review_map = (await this.github.getReviews(user, repository.name, pull_request.number, token))
-                                     .reduce((o, review) => {
-                                       const login = review.user.login;
-                                       if ((!o[login] || o[login].id < review.id) && (review.state == "APPROVED" || review.state == "CHANGES_REQUESTED")) {
-                                         o[login] = review
-                                       }
-                                       return o
-                                     }, {})
+    const gh_reviews = Array.prototype.concat(
+            await this.github.getReviews(user, repository.name, pull_request.number, token),
+            hookPayload.action == "submitted" ? [hookPayload.review] : []
+    )
+    const review_map = gh_reviews.reduce((o, review) => {
+      const login = review.user.login;
+      if ((!o[login] || o[login].id < review.id) && (review.state == "APPROVED" || review.state == "CHANGES_REQUESTED")) {
+        o[login] = review
+      }
+      return o
+    }, {})
     const reviews = Object.keys(review_map).map(key => review_map[key])
     var groups = config.approvals.groups
     const uses_labels = Object.keys(groups || {}).some(group => groups[group].hasOwnProperty('labels'))
@@ -123,9 +127,13 @@ export default class Review extends Check {
         }, 0)
         return approvals >= groups[key].minimum
       }).map(key => groups[key].approval_label || (key + "-approved"))
+      debug(`approved_labels: ${util.inspect(approved_labels)}`)
       var add_labels = approved_labels.filter(l => labels.indexOf(l) < 0)
       if (add_labels.length > 0) {
         await this.github.addIssueLabels(user, repository.name, pull_request.number, add_labels, token)
+      }
+      if (hookPayload.action == "submitted" && hookPayload.review.state == "approved" && approved_labels.length == 0) {
+        debug(`APPROVAL REVIEW SUBMITTED BUT NO APPROVED LABELS: ${util.inspect(gh_reviews, {showHidden: false, depth: null})}`)
       }
     }
     const status = Review.generateStatus(reviews, config.approvals)
@@ -197,7 +205,7 @@ export default class Review extends Check {
                                                                                 }))
           info(`${repository.full_name}#${number}: PR was opened, set state to pending`)
         } else if (action === 'reopened' || action == 'submitted' || action == 'synchronize' || action == 'dismissed') {
-            await this.fetchReviewsAndSetStatus(repository, pull_request, config, token)
+          await this.fetchReviewsAndSetStatus(repository, pull_request, config, token, hookPayload)
         } else if (action === 'labeled' || action === 'unlabeled') {
           // Check to make sure it's a label we care about, otherwise this should be a noop
           const label = hookPayload.label.name
@@ -206,7 +214,7 @@ export default class Review extends Check {
           if (!uses_label) {
             return
           }
-          await this.fetchReviewsAndSetStatus(repository, pull_request, config, token)
+          await this.fetchReviewsAndSetStatus(repository, pull_request, config, token, hookPayload)
         }
       }
     }
