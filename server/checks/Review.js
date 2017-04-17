@@ -104,7 +104,7 @@ export default class Review extends Check {
     )
     const review_map = gh_reviews.reduce((o, review) => {
       const login = review.user.login;
-      if ((!o[login] || o[login].id < review.id) && (review.state == "APPROVED" || review.state == "CHANGES_REQUESTED")) {
+      if ((!o[login] || o[login].id < review.id) && (review.state.toUpperCase() == "APPROVED" || review.state.toUpperCase() == "CHANGES_REQUESTED")) {
         o[login] = review
       }
       return o
@@ -123,7 +123,7 @@ export default class Review extends Check {
       // Find the groups that are approved and apply approval labels for that group
       const approved_labels = Object.keys(groups).filter(key => {
         const approvals = groups[key].from.users.reduce((sum, user) => {
-          return sum + reviews.some(r => r.state == "APPROVED" && r.user.login == user)
+          return sum + reviews.some(r => r.state.toUpperCase() == "APPROVED" && r.user.login == user)
         }, 0)
         return approvals >= groups[key].minimum
       }).map(key => groups[key].approval_label || (key + "-approved"))
@@ -132,7 +132,7 @@ export default class Review extends Check {
       if (add_labels.length > 0) {
         await this.github.addIssueLabels(user, repository.name, pull_request.number, add_labels, token)
       }
-      if (hookPayload.action == "submitted" && hookPayload.review.state == "approved" && approved_labels.length == 0) {
+      if (hookPayload.action == "submitted" && hookPayload.review.state.toUpperCase() == "APPROVED" && approved_labels.length == 0) {
         debug(`APPROVAL REVIEW SUBMITTED BUT NO APPROVED LABELS: ${util.inspect(gh_reviews, {showHidden: false, depth: null})}`)
       }
     }
