@@ -42,9 +42,9 @@ export default class Review extends Check {
    * @returns {Object} Object consumable by Github Status API
    */
   static generateStatus(reviews, {minimum, groups}) {
-    if (reviews.some(r => r.state == "CHANGES_REQUESTED")) {
+    if (reviews.some(r => r.state.toUpperCase() == "CHANGES_REQUESTED")) {
       return {
-        description: `Vetoes: ${reviews.filter(r => r.state == "CHANGES_REQUESTED").map(r => `@${r.user.login}`).join(', ')}.`,
+        description: `Vetoes: ${reviews.filter(r => r.state.toUpperCase() == "CHANGES_REQUESTED").map(r => `@${r.user.login}`).join(', ')}.`,
         state: 'failure',
         context
       }
@@ -56,7 +56,7 @@ export default class Review extends Check {
         return {
           name,
           approvals: groups[name].from.users.reduce((sum, user) => {
-            return sum + reviews.some(r => r.state == "APPROVED" && r.user.login == user) ? 1 : 0
+            return sum + reviews.some(r => r.state.toUpperCase() == "APPROVED" && r.user.login == user) ? 1 : 0
           }, 0),
           minimum: groups[name].minimum,
         };
@@ -71,7 +71,7 @@ export default class Review extends Check {
       }
     }
 
-    const approvals = reviews.filter(r => r.state == "APPROVED")
+    const approvals = reviews.filter(r => r.state.toUpperCase() == "APPROVED")
     if (approvals.length < minimum) {
       return {
         description: `This PR needs ${minimum - approvals.length} more approvals (${approvals.length}/${minimum} given).`,
