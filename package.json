@@ -117,6 +117,7 @@
     "node-tokens": "0.0.9",
     "node-uuid": "1.4.7",
     "normalizr": "2.2.0",
+    "parse-link-header": "1.0.1",
     "passport": "0.3.2",
     "passport-github": "1.1.0",
     "passport-strategy": "1.0.0",

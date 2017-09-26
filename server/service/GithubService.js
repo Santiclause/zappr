@@ -5,6 +5,7 @@ import GithubServiceError from './GithubServiceError'
 import { joinURL, promiseFirst, decode, encode, getIn, toGenericComment } from '../../common/util'
 import { logger } from '../../common/debug'
 import { request } from '../util'
+import parse from 'parse-link-header'
 
 const CallCounter = new Counter('github_api_requests', 'Status codes from Github API', ['type'])
 const debug = logger('github')
@@ -104,8 +105,12 @@ export class GithubService {
       }
       CallCounter.inc({type: 'success'}, 1)
       body = [...body, ...response_body]
-      if (response.headers && response.headers.link && response.headers.link.next) {
-        options.url = response.headers.link.next
+      var parsed = false
+      if (response.headers && response.headers.link) {
+        parsed = parse(response.headers.link)
+      }
+      if (parsed && parsed.next) {
+        options.url = parsed.next.url
       } else {
         break
       }
